@@ -3,7 +3,6 @@ from getpass import getpass
 import os
 import requests
 import subprocess
-import typeform
 import webbrowser
 
 # Function to install the required libraries
@@ -94,7 +93,7 @@ wb = Workbook(filename=ef, read_only=True)
 ###########################
 # TYPEFORM
 ###########################
-if input('Do you alreay have a token? [yes/no]? ')[0].lower == 'n':
+if input('Do you alreay have a token? [yes/no]? ')[0].lower() == 'n':
     print(
         'A token with writing access is required for this program to create an API.\n',
         'Opening tokens creation web page...'
