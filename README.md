@@ -1,2 +1,2 @@
 # Exel-to-Typeform-API
-Run `main.py` and hope for the best.
+Run the file `main.py` in a folder containing Excel files and hope for the best.
