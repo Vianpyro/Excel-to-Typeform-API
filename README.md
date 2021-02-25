@@ -1,2 +1,2 @@
 # Exel-to-Typeform-API
- I don't know yet
+Run `main.py` and hope for the best.
