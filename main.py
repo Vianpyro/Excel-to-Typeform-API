@@ -104,9 +104,11 @@ if input('Do you alreay have a token? [yes/no]? ')[0].lower == 'n':
 my_typeform = typeform.Typeform(getpass('Token (text will be hidden): '))
 form = my_typeform.forms
 
+"""
 # Delete all the older forms
 for e in form.list()['items']:
     form.delete(e['id'])
+"""
 
 fields = [
     {
