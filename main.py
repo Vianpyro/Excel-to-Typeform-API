@@ -9,7 +9,7 @@ import webbrowser
 def install_library(library) -> None:
     print(f'Installing {library}...')
     try:
-        subprocess.Popen(['pip', 'install', library])
+        subprocess.Popen(['pip3', 'install', library])
     except:
         raise ImportError(f'Unable to find the library {library}!')
     else:
@@ -30,16 +30,34 @@ except:
     install_library('typeform')
     import typeform
 
+# Import requests to be able to send/get requests
+try:
+    import requests
+except:
+    install_library('requests')
+    import requests
 
 ###########################
 # EXCEL
 ###########################
 class Excel_File:
     def __init__(self, path:str='', filename:str=None):
+        """
+        Constructor for Excel files reader class.
+
+        :param path: The path to the Excel file to read.
+        :param filename: The name of the Excel file to read.
+        """
         self.path = path if path not in (None, '') or os.path.exists(path) else os.path.abspath(os.getcwd())
         self.filename = self.retrieve_filename(filename)
 
     def retrieve_filename(self, filename) -> str:
+        """
+        Method to scan the path directory to find the Excel file(s).
+
+        :param filename: The name of the file that should be found.
+        :return: The name(s) of the file(s) that was found.
+        """
         if filename is not None and os.path.exists(self.path + os.path.sep + filename):
             return filename
         else:
@@ -71,6 +89,15 @@ class Excel_File:
 
 class Workbook:
     def __init__(self, filename:(str, Excel_File), read_only:bool=False, keep_vba:bool=False, data_only:bool=False, keep_links:bool=True):
+        """
+        Constructor for Workbook class.
+
+        :filename: The name of the file to extract the informations from.
+        :read_only: Optimised for reading, content cannot be edited.
+        :keep_vba: Preseve vba content (this does NOT mean you can use it).
+        :data_only: Controls whether cells with formulae have either the formula (default) or the value stored the last time Excel read the sheet.
+        :keep_links: Whether links to external workbooks should be preserved (True by default).
+        """
         self.workbook = openpyxl.load_workbook(str(filename), read_only, keep_vba, data_only, keep_links)
         self.sheets_count = len(self.workbook.sheetnames)
         self.content = [
