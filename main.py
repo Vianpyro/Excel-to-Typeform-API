@@ -1,41 +1,26 @@
-# -*- coding:utf-8 -*-
+#!/usr/bin/env python3
+# -*- coding: utf8 -*-
 from getpass import getpass
 import os
-import requests
 import subprocess
 import webbrowser
 
-# Function to install the required libraries
-def install_library(library) -> None:
-    print(f'Installing {library}...')
+# Import the required libraries.
+try:
+    import openpyxl
+    import typeform
+    import requests
+except:
+    print('Installation of the required libraries...')
     try:
-        subprocess.Popen(['pip3', 'install', library])
+        subprocess.Popen('pip3 install -r requirements.txt')
+        import openpyxl
+        import typeform
+        import requests
     except:
-        raise ImportError(f'Unable to find the library {library}!')
+        raise ImportError('Unable to install the required libraries!')
     else:
-        print(f'Successfuly installed {library}.')
-
-
-# Import openpyxl to be able to read Excel files
-try:
-    import openpyxl
-except:
-    install_library('openpyxl')
-    import openpyxl
-
-# Import typeform to be able to send requests to Typeform
-try:
-    import typeform
-except:
-    install_library('typeform')
-    import typeform
-
-# Import requests to be able to send/get requests
-try:
-    import requests
-except:
-    install_library('requests')
-    import requests
+        print('The required libraries have been successfully installed.')
 
 ###########################
 # EXCEL
@@ -161,4 +146,7 @@ fields = [
 
 # Create a new form
 new_form = form.create({'title': ef.filename.split('.')[0], 'fields': fields})
-print(f'New form created with ID: {new_form["id"]}!')
+input(
+    f'New form created with ID: {new_form["id"]}!\n',
+    'Press "enter" to close this window.'
+)
