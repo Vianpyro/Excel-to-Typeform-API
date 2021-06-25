@@ -4,8 +4,10 @@ import os
 import subprocess
 import tkinter as tk
 import tkinter.filedialog as tkfiledialog
+import tkinter.messagebox as tkmessagebox
 import webbrowser
 
+# 6NR1L7LJ2G2LmAb37yRkC3EUdeo7qfyX3wDnMXWxtod5
 typeform_types = [
     'date', 'dropdown', 'email', 'file_upload', 
     'group', 'legal', 'long_text', 'matrix', 
@@ -188,8 +190,14 @@ class Application(tk.Frame):
             
             # Delete older Typeforms ?
             if self.remove_older_forms.get():
-                for e in form.list()['items']:
-                    form.delete(e['id'])
+                if tkmessagebox.askyesno(
+                    'Delete older form(s) confirmation',
+                    f'You are about to delete {len(form.list()["items"])} form(s), are you sure you want to continue?'
+                ):
+                    for e in form.list()['items']:
+                        form.delete(e['id'])
+                else:
+                    self.console_log('Canceled Typeform deletion')
 
             fields = [
                 {
