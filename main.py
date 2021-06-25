@@ -187,7 +187,7 @@ class Application(tk.Frame):
             form = my_typeform.forms
             
             # Delete older Typeforms ?
-            if self.remove_older_forms:
+            if self.remove_older_forms.get():
                 for e in form.list()['items']:
                     form.delete(e['id'])
 
@@ -195,7 +195,7 @@ class Application(tk.Frame):
                 {
                     "title": wb.content[i + 1][1],
                     "ref": f"Question-{wb.content[i + 1][0]}",
-                    "type": str(self.typeform_type_value.get() if self.typeform_type_value.get() in typeform_types else 'yes_no'),
+                    "type": str(self.typeform_type_value.get() if self.typeform_type_value.get() in typeform_types else 'multiple_choice'),
                     "properties": {
                         "randomize": False,
                         "allow_multiple_selection": False,
