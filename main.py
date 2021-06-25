@@ -1,79 +1,30 @@
 #!/usr/bin/env python3
 # -*- coding: utf8 -*-
-from getpass import getpass
 import os
 import subprocess
+import tkinter as tk
+import tkinter.filedialog as tkfiledialog
 import webbrowser
 
-# Import the required libraries.
-try:
-    import openpyxl
-    import typeform
-    import requests
-except:
-    print('Installation of the required libraries...')
-    try:
-        subprocess.Popen('pip3 install -r requirements.txt')
-        import openpyxl
-        import typeform
-        import requests
-    except:
-        raise ImportError('Unable to install the required libraries!')
-    else:
-        print('The required libraries have been successfully installed.')
+typeform_types = [
+    'date', 'dropdown', 'email', 'file_upload', 
+    'group', 'legal', 'long_text', 'matrix', 
+    'multiple_choice', 'number', 'opinion_scale', 
+    'payment', 'phone_number', 'picture_choice', 
+    'ranking', 'rating', 'short_text', 'statement',
+    'website', 'yes_no'
+]
+
+# Install requirements
+subprocess.Popen('pip3 install -r requirements.txt')
+import openpyxl
+import typeform
 
 ###########################
-# EXCEL
+# Workbook (Excel metadata)
 ###########################
-class Excel_File:
-    def __init__(self, path:str='', filename:str=None):
-        """
-        Constructor for Excel files reader class.
-
-        :param path: The path to the Excel file to read.
-        :param filename: The name of the Excel file to read.
-        """
-        self.path = path if path not in (None, '') or os.path.exists(path) else os.path.abspath(os.getcwd())
-        self.filename = self.retrieve_filename(filename)
-
-    def retrieve_filename(self, filename) -> str:
-        """
-        Method to scan the path directory to find the Excel file(s).
-
-        :param filename: The name of the file that should be found.
-        :return: The name(s) of the file(s) that was found.
-        """
-        if filename is not None and os.path.exists(self.path + os.path.sep + filename):
-            return filename
-        else:
-            excel_files = [
-                document for document in os.listdir(os.path.abspath(os.getcwd()))
-                if document[-5:] in ['.xlsx', '.xlsm', '.xltx', '.xltm']
-            ]
-
-            if len(excel_files) == 0:
-                raise ValueError('Unable to locate any Excel file in this directory:', os.path.abspath(os.getcwd()))
-            elif len(excel_files) > 1:
-                # Ask which of the Excel documents should be opened
-                name = input(f'{len(excel_files)} Excel files were found, please type the name of the one to use: ')
-                corresponding_files = [document for document in excel_files if name in document]
-
-                # As long as exactly one document is not selected, ask the user
-                while not len(corresponding_files) == 1:
-                    name = input('Error, please type the name of the one to use: ')
-                    corresponding_files = [document for document in excel_files if name in document]
-
-                # Once a document is selected, open it
-                return corresponding_files[0]
-            else:
-                return excel_files[0]
-        raise Exception('Unexcepted Exception.')
-
-    def __str__(self):
-        return str(self.path + os.path.sep + self.filename)
-
 class Workbook:
-    def __init__(self, filename:(str, Excel_File), read_only:bool=False, keep_vba:bool=False, data_only:bool=False, keep_links:bool=True):
+    def __init__(self, filename, read_only:bool=False, keep_vba:bool=False, data_only:bool=False, keep_links:bool=True):
         """
         Constructor for Workbook class.
 
@@ -99,54 +50,189 @@ class Workbook:
         self.rows_titles = self.content[0] if self.sheets_count == 1 else [sheet[0] for sheet in self.content]
 
 
-ef = Excel_File()
-wb = Workbook(filename=ef, read_only=True)
-
 ###########################
-# TYPEFORM
+# Tkinter App
 ###########################
-if input('Do you alreay have a token? [yes/no]? ')[0].lower() == 'n':
-    print(
-        'A token with writing access is required for this program to create an API.\n',
-        'Opening tokens creation web page...'
-    )
-    webbrowser.open('https://admin.typeform.com/account#/section/tokens', new=1)
+class Application(tk.Frame):
+    def __init__(self, master: tk.Tk = None):
+        """
+        Constructor for the Graphic User Interface.
 
-my_typeform = typeform.Typeform(getpass('Token (text will be hidden): '))
-form = my_typeform.forms
+        :param master: The application's Tkinter root.
+        """
+        super().__init__(master)
+        self.master = master
+        self.widgets_width = 30
+        self.master.title('Excel to Typeform')
+        self.grid()
+        self.create_widgets()
 
-"""
-# Delete all the older forms
-for e in form.list()['items']:
-    form.delete(e['id'])
-"""
+    def create_widgets(self) -> None:
+        """
+        Method creating and displaying each widget on the Graphic User Interface.
+        """
+        # Excel resource file
+        self.excel_file_label = tk.Label(self.master, text='Excel resource file:')
+        self.excel_file_label.grid(row=0, column=0, sticky='w')
 
-fields = [
-    {
-        "title": wb.content[i + 1][1],
-        "ref": f"Question-{wb.content[i + 1][0]}",
-        "type": "multiple_choice",
-        "properties": {
-            "randomize": False,
-            "allow_multiple_selection": False,
-            "allow_other_choice": False,
-            "vertical_alignment": True,
-            "choices": [
+        self.excel_file = tk.Entry(self.master, state='readonly', width=self.widgets_width)
+        self.excel_file.grid(row=0, column=1, columnspan=2)
+
+        self.excel_file_select_button = tk.Button(self.master, text='Select', padx=7, pady=2, command=self.select_excel_file)
+        self.excel_file_select_button.grid(row=0, column=3)
+
+        # Typeform title
+        self.typeform_title_label = tk.Label(self.master, text='Typeform title:')
+        self.typeform_title_label.grid(row=1, column=0, sticky='w')
+
+        self.typeform_title = tk.Entry(self.master, width=self.widgets_width)
+        self.typeform_title.grid(row=1, column=1, columnspan=2)
+        
+        # Typeform form type
+        self.typeform_type_label = tk.Label(self.master, text='Typeform type:')
+        self.typeform_type_label.grid(row=2, column=0, sticky='w')
+
+        self.typeform_type_value = tk.StringVar(self.master)
+        self.typeform_type_value.set('<!> auto <!>')
+        self.typeform_type = tk.OptionMenu(self.master, self.typeform_type_value, *typeform_types)
+        self.typeform_type.grid(row=2, column=1, columnspan=2)
+
+        # Typeform token
+        self.typeform_token_label = tk.Label(self.master, text='Typeform token:')
+        self.typeform_token_label.grid(row=3, column=0, sticky='w')
+
+        self.typeform_token = tk.Entry(self.master, width=self.widgets_width // 2, show='*')
+        self.typeform_token.grid(row=3, column=1)
+        self.typeform_token.focus()
+
+        self.typeform_token_display_variable = tk.IntVar()
+        self.typeform_token_display = tk.Checkbutton(self.master, text='Show token', variable=self.typeform_token_display_variable, command=self.show_token)
+        self.typeform_token_display.grid(row=3, column=2)
+
+        self.typeform_token_renew_button = tk.Button(
+            self.master, text='Renew', padx=7, pady=2,
+            command=lambda: webbrowser.open('https://admin.typeform.com/account#/section/tokens', new=1)
+        )
+        self.typeform_token_renew_button.grid(row=3, column=3)
+        
+        # Remove older forms
+        self.remove_older_forms = tk.IntVar()
+        self.remove_older_forms_check = tk.Checkbutton(self.master, text='Remove older Typeforms', variable=self.remove_older_forms)
+        self.remove_older_forms_check.grid(row=self.master.grid_size()[1], column=0, columnspan=4, pady=10)
+
+        # Start generation button
+        self.generate_button = tk.Button(self.master, text='Generate Typeform', padx=10, pady=10, bg='green', font='bold', command=self.generate_api)
+
+        if os.name == 'nt':
+            self.generate_button.grid(row=self.master.grid_size()[1], column=0, columnspan=4, padx=self.widgets_width, pady=self.widgets_width * 3)
+        else:
+            self.generate_button.grid(row=self.master.grid_size()[1], column=2, columnspan=2, padx=self.widgets_width, pady=self.widgets_width * 3)
+            
+            # Close button
+            self.close_button = tk.Button(text='Close', padx=10, pady=10, bg='red', font='bold', command=self.master.destroy)
+            self.close_button.grid(row=self.master.grid_size()[1] - 1, column=0)
+
+        # Console
+        self.console_label = tk.Label(self.master, text='Console:')
+        self.console_label.grid(row=self.master.grid_size()[1], column=0, sticky='w')
+
+        self.console = tk.Text(self.master, state=tk.DISABLED, width=self.widgets_width + 10, height=7)
+        self.console.grid(row=self.master.grid_size()[1], column=0, columnspan=4)
+
+    def show_token(self) -> None:
+        """
+        Method dealing with the visibility of the token.
+        """
+        if self.typeform_token_display_variable.get():
+            self.typeform_token['show'] = ''
+        else:
+            self.typeform_token['show'] = '*'
+
+    def select_excel_file(self) -> None:
+        """
+        Method for choosing the Excel file to be used
+        """
+        # Ask user to select the file to open
+        filename = tkfiledialog.askopenfilename(initialdir=os.path.abspath(os.getcwd()), filetypes=[('Excel files', '.xlsx .xlsm .xltx .xltm .xls')])
+
+        # Display the file name
+        self.excel_file['state'] = 'normal'
+        self.excel_file.delete(0, tk.END)
+        self.excel_file.insert(tk.END, filename.split('/')[-1])
+        self.excel_file['state'] = 'readonly'
+        self.console_log(f'Opened {filename}' if filename != '' else 'No file selected')
+
+        # Auto generate Typeform title
+        self.typeform_title.delete(0, tk.END)
+        self.typeform_title.insert(tk.END, filename.split('/')[-1].split('.')[0])
+
+    def console_log(self, message:str='<message>') -> None:
+        """
+        Method to log a message in the console box of the Graphic User Interface.
+        """
+        self.console['state'] = 'normal'
+        self.console.insert(tk.END, f'> {message}.\n')
+        self.console.see('end')
+        self.console['state'] = tk.DISABLED
+
+    def generate_api(self) -> None:
+        """
+        Method to make the request to the Typeform API.
+        """
+        if self.verify_widgets():
+            self.console_log('Generating Typeform..')
+
+            wb = Workbook(filename=self.excel_file.get(), read_only=True)
+            my_typeform = typeform.Typeform(self.typeform_token.get())
+            form = my_typeform.forms
+            
+            # Delete older Typeforms ?
+            if self.remove_older_forms:
+                for e in form.list()['items']:
+                    form.delete(e['id'])
+
+            fields = [
                 {
-                    "label": label,
-                    "ref": "test"+label
+                    "title": wb.content[i + 1][1],
+                    "ref": f"Question-{wb.content[i + 1][0]}",
+                    "type": str(self.typeform_type_value.get() if self.typeform_type_value.get() in typeform_types else 'yes_no'),
+                    "properties": {
+                        "randomize": False,
+                        "allow_multiple_selection": False,
+                        "allow_other_choice": False,
+                        "vertical_alignment": True,
+                        "choices": [
+                            {
+                                "label": label,
+                                "ref": "test"+label
+                            }
+                            for label in wb.content[i + 1][3].split('/')
+                        ]
+                    },
+                    "validations": {"required": True}
                 }
-                for label in wb.content[i + 1][3].split('/')
+                for i in range(len(wb.content) - 1)
             ]
-        },
-        "validations": {"required": True}
-    }
-    for i in range(len(wb.content) - 1)
-]
+            
+            # Create a new form
+            new_form = form.create({'title': self.typeform_title.get(), 'fields': fields})
+            self.console_log(f'New form created with ID: {new_form["id"]}')
+            self.console_log('You can now close this window')
+        else:
+            self.console_log('Error - At least one field is not correct')
 
-# Create a new form
-new_form = form.create({'title': ef.filename.split('.')[0], 'fields': fields})
-input(
-    f'New form created with ID: {new_form["id"]}!\n',
-    'Press "enter" to close this window.'
-)
+    def verify_widgets(self) -> bool:
+        """
+        Method to check if a request can be made to the API or if the user still has to fill in at least one field.
+        
+        :return: Wether a proper request can be made to the API.
+        """
+        return bool(
+            self.excel_file.get() != ''
+            and self.typeform_title.get() != ''
+            and len(self.typeform_token.get()) == 44
+        )
+
+root = tk.Tk()
+app = Application(master=root)
+app.mainloop()
